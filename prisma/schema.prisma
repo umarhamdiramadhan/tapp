@@ -1,0 +1,272 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  email String     @id @db.VarChar(255)
+  name String      @db.VarChar(100)
+  password String  @db.VarChar(255)
+  token String?    @unique @db.VarChar(255)
+  role Status
+  is_aktif  Boolean @default(true)
+
+  @@map("users")
+}
+
+enum Status {
+    administrator
+    admin
+    cs
+    operator
+}
+
+model DaftarHitam {
+  id Int @id @default(autoincrement())
+  nomer_tujuan String @unique @db.VarChar(100)
+  keterangan String?  @db.VarChar(100)
+
+  @@map("daftar_hitam")
+} 
+
+model Grup {
+  kode_grup String @id @db.VarChar(100)
+  nama_grup String  @db.VarChar(100)
+
+  resellers Reseller[]
+
+  price_grups HargaGrup[]
+
+  @@map("grups")
+}
+
+model Provider{
+  kode_provider String @id @db.VarChar(100)
+  nama_provider String  @db.VarChar(100)
+  is_gangguan Boolean @default(false)
+  prefix String?  @db.VarChar(100)
+  minimal Int?
+  maxsimal Int?
+
+  products Product[]
+
+  @@map("providers")
+}
+
+model Product{
+  kode_produk String @id @db.VarChar(100)
+  nama_produk String  @db.VarChar(255)
+  is_gangguan Boolean @default(false)
+  is_aktif Boolean @default(true)
+  is_multi Boolean @default(false)
+  kode_providers String  @db.VarChar(100)
+
+  provider Provider @relation(fields:[kode_providers],references:[kode_provider])
+
+  price_grups HargaGrup[]
+
+
+  @@map("products")
+}
+
+model Reseller{
+  kode_reseller String @id @db.VarChar(100)
+  nama_reseller String  @db.VarChar(100)
+  saldo Int @default(0)
+  ip String?  @db.VarChar(100)
+  ip_callback String?  @db.VarChar(100)
+  password_ip String?  @db.VarChar(255)
+  is_aktif Boolean @default(true)
+  alamat String  @db.VarChar(255)
+  nama_pemilik String?  @db.VarChar(100)
+  nomer_telefon  String  @db.VarChar(14) @unique
+  id_telegram String?  @db.VarChar(255)
+  allow_sign Boolean @default(false)
+  pin String @db.VarChar(255)
+  kode_grups String  @db.VarChar(100)
+
+  grup Grup @relation(fields:[kode_grups],references:[kode_grup])
+
+
+  ticket Tiket[]
+  mutations Mutasi[]
+  transactions Transaction[]
+
+
+  @@map("resellers")
+}
+
+model Outbox {
+
+  id Int @id @default(autoincrement())
+  pesan  String   @db.Text
+  date   DateTime @default(now())
+
+  @@map("outboxs")
+}
+
+
+
+model Mutasi {
+
+  id Int @id @default(autoincrement())
+  date   DateTime @default(now())
+  jumlah Int
+  keterangan String  @db.VarChar(255)
+  kode_resellers String? @db.VarChar(100)
+
+  resellers Reseller? @relation(fields:[kode_resellers],references:[kode_reseller], onDelete:SetNull)
+
+  @@map("mutations")
+}
+
+
+model Tiket {
+
+  id Int @id @default(autoincrement())
+  date   DateTime  @default(now())
+  status Boolean @default(false)
+  kode_resellers String @db.VarChar(100)
+  nominal_sama Int
+  nominal_ticket Int
+
+  resellers Reseller @relation(fields:[kode_resellers],references:[kode_reseller])
+
+  @@map("ticket")
+}
+
+model HargaGrup {
+   id Int @id @default(autoincrement())
+   kode_grups String  @db.VarChar(100)
+   kode_produks String  @db.VarChar(100)
+   harga Int
+   is_gangguan Boolean @default(false)
+
+   grups Grup @relation(fields:[kode_grups],references:[kode_grup])
+   products Product @relation(fields:[kode_produks],references:[kode_produk])
+
+   
+
+   @@unique([kode_produks, kode_grups])
+
+   @@map("price_grups")
+}
+
+model Jawaban {
+  id Int @id @default(autoincrement())
+  nama_jawaban String  @db.VarChar(100)
+  kata_kunci   String  @db.VarChar(100)
+  regex    String  @db.VarChar(255)
+  prioritas Int
+  generate_sn String  @db.VarChar(255)
+  is_update Boolean
+  status StatusJawaban
+
+  @@map("jawabans")
+}
+
+enum StatusJawaban {
+    Sukses
+    Gagal
+    Tujuan_Salah
+    Dibatalkan
+    Gangguan
+    Menunggu
+    Alihkan
+}
+
+model Modul {
+   id Int @id @default(autoincrement())
+   nama_moduls String  @db.VarChar(100)
+   username String?  @db.VarChar(255)
+   memberid String?  @db.VarChar(255)
+   pin String? @db.VarChar(255)
+   password String?  @db.VarChar(255)
+   cek_saldo String?  @db.VarChar(255)
+   tiket String?  @db.VarChar(255)
+   ip String  @db.VarChar(255)
+   perintah String  @db.VarChar(255)
+   antrian_produk Int @default(0)
+   total_antrian Int @default(0)
+   jawabans String @db.VarChar(255)
+
+   parsings Parsing[]
+   transactions Transaction[]
+
+  @@map("moduls")
+}
+
+model Parsing {
+  id Int @id @default(autoincrement())
+  id_moduls Int
+  kode_produks String  @db.VarChar(255)
+  parsing String  @db.VarChar(255)
+  harga_beli Int @default(0)
+  prioritas Int
+
+  moduls Modul @relation(fields:[id_moduls],references:[id])
+
+  @@unique([kode_produks, id_moduls])
+
+  @@map("parsings")
+}
+
+model Inbox{
+  id Int @id @default(autoincrement())
+  date DateTime @default(now())
+  pesan String @db.Text
+
+  transactions Transaction[]
+
+  @@map("inboxs")
+}
+
+enum StatusTransaksi {
+    Sukses
+    Gagal
+    Tujuan_Salah
+    Dibatalkan
+    Gangguan
+    Menunggu
+    DiProses
+}
+
+model Transaction {
+  trxid Int @id @default(autoincrement())
+  reffid String  @db.VarChar(255)
+  tanggal_entry DateTime @default(now())
+  qty Int?
+  counter Int?
+  nomer_tujuan String  @db.VarChar(255)
+  tanggal_update DateTime @default(now())
+  id_moduls Int?
+  kode_resellers String  @db.VarChar(255)
+  kode_produks String  @db.VarChar(100)
+  harga Int
+  harga_beli Int @default(0)
+  perintah String?  @db.VarChar(255)
+  id_inboxs Int?
+  sn String? @db.Text
+  status StatusTransaksi
+  saldo_awal  Int
+  saldo_akhir Int
+
+  
+ 
+  resellers Reseller @relation(fields:[kode_resellers],references:[kode_reseller])
+  moduls Modul? @relation(fields:[id_moduls],references:[id])
+  inboxs Inbox? @relation(fields:[id_inboxs],references:[id])
+
+  @@map("transactions")
+  
+}	
