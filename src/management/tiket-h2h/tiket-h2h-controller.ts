@@ -15,7 +15,8 @@ export class TiketH2hController{
                     pin: req.query.pin as string,
                     password: req.query.password as string,
                     ip: req.ip as string,
-                    nominal: Number(req.query.nominal)
+                    amount: Number(req.query.amount),
+                    cmd:req.query.cmd as string
                  }
                     const queryParameters = req.query;
                     const queryString = new URLSearchParams(queryParameters as Record<string, string>).toString();

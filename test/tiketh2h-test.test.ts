@@ -21,8 +21,8 @@ describe("/api/TIKET VIEW",()=>{
                     memberid:"test",
                     password:"test",
                     pin:"test",
-                    nominal:20000
-                    
+                    amount:20000,
+                    cmd:"tiket"
                 })
                 expect(response.text).toBe("ip yang anda masukan salah");
         })
@@ -33,7 +33,8 @@ describe("/api/TIKET VIEW",()=>{
                 memberid:"",
                 password:"",
                 pin:"",
-                nominal:""
+                amount:"",
+                cmd:""
             })
            expect(response.text).toBe("Validation Error Silahkan masukan memberId atau pin atau password");
         }) 
@@ -44,7 +45,8 @@ describe("/api/TIKET VIEW",()=>{
                 memberid:"test2",
                 password:"password",
                 pin:"122",
-                nominal:20000
+                amount:20000,
+                cmd:"tiket"
                 
             })
             expect(response.text).toBe("member Id Tidak di temukan");
@@ -56,7 +58,8 @@ describe("/api/TIKET VIEW",()=>{
                 memberid:"TEST1",
                 password:"password",
                 pin:"122",
-                nominal:20000
+                amount:20000,
+                cmd:"tiket"
                 
             })
             expect(response.text).toBe("pin atau password salah");
@@ -68,7 +71,8 @@ describe("/api/TIKET VIEW",()=>{
                 memberid:"TEST1",
                 password:"test",
                 pin:"122",
-                nominal:20000
+                amount:20000,
+                cmd:"tiket"
                 
             })
             expect(response.text).toBe("pin atau password salah");
@@ -81,7 +85,8 @@ describe("/api/TIKET VIEW",()=>{
                 memberid:"TEST1",
                 password:"test",
                 pin:"122",
-                nominal:"abc"
+                amount:"abc",
+                cmd:"tiket"
                 
             })
             console.log(response.text)
@@ -94,11 +99,12 @@ describe("/api/TIKET VIEW",()=>{
                 memberid:"TEST1",
                 password:"test",
                 pin:"test",
-                nominal:20000
+                amount:20000,
+                cmd:"tiket"
                 
             })
             console.log(response.text)
-            expect(response.text).toBeDefined();
+            expect(response.text).toMatch(/silahkan transfer/);
         })
 
 })

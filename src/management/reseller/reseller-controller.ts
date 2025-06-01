@@ -70,10 +70,8 @@ export class ResellerController {
         try {
 
             const request:ResellerTambahSaldo = req.body as ResellerTambahSaldo
-            const response = await ResellerService.tambahSaldo(request)
-            res.status(200).json({
-                data:response
-            })
+            await ResellerService.tambahSaldo(request,res)
+          
             
         } catch (error) {
             next(error)
@@ -82,11 +80,8 @@ export class ResellerController {
     static async kurangSaldo(req:Request,res:Response,next:NextFunction){
         try {
             const request:ResellerKurangSaldo = req.body as ResellerKurangSaldo
-            const response = await ResellerService.kurangSaldo(request)
-            res.status(200).json({
-                data:response
-            })
-            
+            await ResellerService.kurangSaldo(request,res)
+          
             
         } catch (error) {
             next(error)

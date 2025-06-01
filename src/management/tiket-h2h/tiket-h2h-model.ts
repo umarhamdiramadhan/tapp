@@ -5,7 +5,8 @@ export type RequestTiketH2h={
     pin:string,
     password:string,
     ip:string,
-    nominal:number
+    amount:number
+    cmd:string
 }
 
 export function toResponseTiketH2h(jumlah_tiket:number):string{

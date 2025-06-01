@@ -95,7 +95,7 @@ export class TiketService {
                         current_page: searchRequest.page,
                         total_page:Math.ceil(total / searchRequest.size),
                         size : searchRequest.size
-                    } 
+                } 
         }
 
     }

@@ -1,11 +1,13 @@
 import { prismaClient } from "../../application/database";
 import { ResponseErrorApi } from "../../error/response-error-api";
 import { Validation } from "../../validation/validation";
+import { ApiReportClient } from "../api-client/api-report-client";
 import { GrupService } from "../grup/grup-service";
 import { Pageable } from "../page/page";
 import { ResellerCreateRequest, ResellerKurangSaldo, ResellerResponse, ResellerTambahSaldo, ResellerUpdateRequest, ResellerViewRequest, toResellerResponse } from "./reseller-model";
 import { ResellerValidation } from "./reseller-validation";
 import bcrypt from "bcrypt";
+import { Response } from "express";
 
 export class ResellerService{
 
@@ -134,7 +136,7 @@ export class ResellerService{
         }
     }
 
-    static async tambahSaldo(request:ResellerTambahSaldo):Promise<string>{
+    static async tambahSaldo(request:ResellerTambahSaldo,res:Response){
 
         const tambahSaldoRequest = Validation.validate(ResellerValidation.TAMBAHSALDO,request)
         
@@ -149,7 +151,7 @@ export class ResellerService{
                 })
                  const tambah = Math.ceil(findSaldo!.saldo + tambahSaldoRequest.jumlah)
                 
-                 await tx.reseller.update({
+                const reseller = await tx.reseller.update({
                     where:{
                         kode_reseller:tambahSaldoRequest.kode_reseller
                     },
@@ -165,34 +167,39 @@ export class ResellerService{
                         kode_resellers:tambahSaldoRequest.kode_reseller
                     }
                 })
-                return tambah ;
+                return reseller ;
             })
 
-            const response =`berhasil tambah saldo kode reseller: ${request.kode_reseller} dengan jumlah ${request.jumlah} sisa saldo ${tambahSaldoResult}`
+            const response =`berhasil tambah saldo kode reseller: ${request.kode_reseller} dengan jumlah ${request.jumlah} sisa saldo ${tambahSaldoResult.saldo}`
 
-            return response
+            res.status(200).json({
+            data: `${response}`
+            });
+
+                    
+            await ApiReportClient.sendApiClient(tambahSaldoRequest?.ip_callback,response)
 
     }
 
-    static async kurangSaldo(request:ResellerKurangSaldo):Promise<string>{
+    static async kurangSaldo(request:ResellerKurangSaldo,res:Response){
 
-        const tambahSaldoRequest = Validation.validate(ResellerValidation.KURANGSALDO,request)
+        const kurangSaldo = Validation.validate(ResellerValidation.KURANGSALDO,request)
         
-        await this.checkKodeReseller(tambahSaldoRequest.kode_reseller)
+        await this.checkKodeReseller(kurangSaldo.kode_reseller)
 
 
         const kurangSaldoResult =  await prismaClient.$transaction(async (tx) => {
 
             const findSaldo = await tx.reseller.findFirst({
                 where:{
-                    kode_reseller:tambahSaldoRequest.kode_reseller
+                    kode_reseller:kurangSaldo.kode_reseller
                 }
             })
-            const kurang = Math.ceil(findSaldo!.saldo - tambahSaldoRequest.jumlah)
+            const kurang = Math.ceil(findSaldo!.saldo - kurangSaldo.jumlah)
 
-            await tx.reseller.update({
+           const reseller =  await tx.reseller.update({
                 where:{
-                    kode_reseller:tambahSaldoRequest.kode_reseller
+                    kode_reseller:kurangSaldo.kode_reseller
                 },
                 data:{
                     saldo:kurang
@@ -201,16 +208,21 @@ export class ResellerService{
 
             await tx.mutasi.create({
                 data:{
-                    jumlah:tambahSaldoRequest.jumlah,
-                    keterangan:tambahSaldoRequest.keterangan,
-                    kode_resellers:tambahSaldoRequest.kode_reseller
+                    jumlah:kurangSaldo.jumlah,
+                    keterangan:kurangSaldo.keterangan,
+                    kode_resellers:kurangSaldo.kode_reseller
                 }
             })
-            return kurang
+            return reseller
          })
-        const response =`berhasil kurang saldo kode reseller: ${request.kode_reseller} dengan jumlah ${request.jumlah} sisa saldo ${kurangSaldoResult}`
+        const response =`berhasil kurang saldo kode reseller: ${request.kode_reseller} dengan jumlah ${request.jumlah} sisa saldo ${kurangSaldoResult.saldo}`
 
-        return response
+            res.status(200).json({
+            data: `${response}`
+            });
+
+                    
+        await ApiReportClient.sendApiClient(kurangSaldoResult?.ip_callback,response)
 
     }
 

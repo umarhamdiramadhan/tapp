@@ -14,6 +14,7 @@ import { ParsingController } from "../management/parsing/parsing-controller"
 import { InboxController } from "../management/inbox/inbox-controller"
 import { OutboxController } from "../management/outbox/outbox-controller"
 import { TiketController } from "../management/tiket/tiket-controller"
+import { TransaksiController } from "../management/transaksi/transaksi-controller"
 
 export const privateRouter = express.Router()
 privateRouter.use(authMiddleware)
@@ -87,3 +88,8 @@ privateRouter.get("/api/inbox",InboxController.view)
 privateRouter.get("/api/outbox",OutboxController.view)
 
 privateRouter.get("/api/tiket",TiketController.view)
+
+
+privateRouter.get("/api/transaksi",TransaksiController.view)
+privateRouter.get("/api/transaksi/gagal",TransaksiController.updateGagal)
+privateRouter.get("/api/transaksi/sukses",TransaksiController.UpdateSukses)

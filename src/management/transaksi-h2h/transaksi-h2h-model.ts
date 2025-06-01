@@ -9,6 +9,7 @@ export type RequestTransksaksiH2h ={
     memberID:string
     pin:string
     password:string
+    ip:string
 }
 
 export type ResponseH2h ={
@@ -29,6 +30,11 @@ export function ResponseTransaksiBlacklist(refID: string, product: string, dest:
 export function ResponseTransaksiGagal(transaction:ResponseH2h):string{
     return `Transaksi dinomer ${transaction.nomer_tujuan} status gagal, Gagal kode produk ${transaction.kode_produks} reffid ${transaction.reffid} saldo ${formatRupiah(transaction.saldo_awal)} - ${formatRupiah(transaction.harga)} = ${formatRupiah(transaction.saldo_akhir)} TrxId ${transaction.trxid} #Transaksi Normal`
 }
+
+export function ResponseTransaksiGagalManual(transaction:Transaction):string{
+    return `Transaksi dinomer ${transaction.nomer_tujuan} status gagal, Gagal kode produk ${transaction.kode_produks} reffid ${transaction.reffid} saldo ${formatRupiah(transaction.saldo_awal)} - ${formatRupiah(transaction.harga)} = ${formatRupiah(transaction.saldo_akhir)} TrxId ${transaction.trxid} #Transaksi Normal`
+}
+
 
 export function ResponseTransaksiTujuanSalah(transaction:Transaction):string{
     return `Transaksi dinomer ${transaction.nomer_tujuan} status gagal, Tujuan_Salah kode produk ${transaction.kode_produks} reffid ${transaction.reffid} saldo ${formatRupiah(transaction. saldo_awal)} - ${formatRupiah(transaction.harga)} = ${formatRupiah(transaction.saldo_akhir)} TrxId ${transaction.trxid} #Transaksi Normal`

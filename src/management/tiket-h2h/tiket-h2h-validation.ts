@@ -7,7 +7,7 @@ export class TiketH2hValidation{
         memberid:z.string().min(1),
         pin:z.string().min(1),
         password:z.string().min(1),
-        nominal:z.number().min(1),
+        amount:z.number().min(1),
     })
 
 }

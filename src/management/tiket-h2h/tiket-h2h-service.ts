@@ -18,7 +18,7 @@ export class TiketH2hService {
         const checkNominalTiket = await prismaClient.tiket.findFirst({
             where:{
                 kode_resellers:checkRequest.memberid,
-                nominal_sama:checkRequest.nominal
+                nominal_sama:checkRequest.amount
             }
         })
 
@@ -28,14 +28,14 @@ export class TiketH2hService {
         }
 
         const randomNumber = generateRandomFrom1To3000();
-        const totalNominal = Math.ceil(checkRequest.nominal + randomNumber)
+        const totalNominal = Math.ceil(checkRequest.amount + randomNumber)
         
 
 
         const requestTiket = await prismaClient.tiket.create({
             data:{
                 nominal_ticket:totalNominal,
-                nominal_sama:checkRequest.nominal,
+                nominal_sama:checkRequest.amount,
                 kode_resellers:checkRequest.memberid
             }
         })

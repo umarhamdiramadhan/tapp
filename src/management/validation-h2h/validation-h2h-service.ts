@@ -1,7 +1,7 @@
 import { prismaClient } from "../../application/database"
 import { ResponseErrorApiH2h } from "../../error/response-error-api-h2h"
 import bcrypt, { compare } from "bcrypt";
-import { ResponseTransaksiBlacklist, ResponseTransaksiGangguanFirst, ResponseTransaksiMenunggu, ResponseTransaksiProdukTidakAktif, ResponseTransaksiProdukTidakDiTemukan, ResponseTransaksiSaldoTidakCukup, ResponseTransaksiSudahPernah } from "../transaksi-h2h/transaksi-h2h-model";
+import { ResponseTransaksiBlacklist, ResponseTransaksiGangguanFirst, ResponseTransaksiMenunggu, ResponseTransaksiMulti, ResponseTransaksiProdukTidakAktif, ResponseTransaksiProdukTidakDiTemukan, ResponseTransaksiSaldoTidakCukup, ResponseTransaksiSudahPernah } from "../transaksi-h2h/transaksi-h2h-model";
 import { endOfDayUTCNow, startOfDayUTCNow } from "../../utils/date-now-indonesia";
 
 export class ValidationH2hService{
@@ -35,12 +35,13 @@ export class ValidationH2hService{
 
     }
 
-    static async checkTransaction(reffid:string,kode_produks:string,nomer_tujuan:string){
+    static async checkTransaction(memberid:string,reffid:string,kode_produks:string,nomer_tujuan:string){
         const check = await prismaClient.transaction.findFirst({
             where:{
                 reffid:reffid,
                 kode_produks:kode_produks,
-                nomer_tujuan:nomer_tujuan
+                nomer_tujuan:nomer_tujuan,
+                kode_resellers:memberid
             }
         })   
         if(check){
@@ -102,12 +103,14 @@ export class ValidationH2hService{
     }
 
     static async chekKodeProdukIsActive(refID:string,memberid:string,product:string,dest:string){
+        console.log(product)
         const produk = await prismaClient.product.findFirst({
             where:{
-                kode_produk:product
+                kode_produk:product,
+                is_aktif:false
             }
         })
-        if(produk!.is_aktif === true){
+        if(produk){
             const response = ResponseTransaksiProdukTidakAktif(refID,product,dest)
             throw new ResponseErrorApiH2h(response)
         }
@@ -137,39 +140,37 @@ export class ValidationH2hService{
             throw new ResponseErrorApiH2h(response)
         }
     }
-    static async checkModul(kode_produk:string,trxid:number,nomer_tujuan:string){
-        const checkModul = await prismaClient.parsing.findFirst({
-            where:{ 
-                kode_produks:kode_produk
-            },
-            orderBy: {
-                prioritas: 'asc',
-            },
-        })
+    static async checkModul(kode_produk:string,trxid:number,nomer_tujuan:string):Promise<boolean>{
 
-        const transaksi = await prismaClient.transaction.update({
+        const checkModul = await prismaClient.parsing.findFirst({
             where:{
-                trxid:trxid
+                kode_produks:kode_produk,
             },
-            data:{
-                status:"Menunggu"
+            orderBy:{
+                prioritas:"asc"
             }
         })
 
-        if(!checkModul){
-            const response = ResponseTransaksiMenunggu(transaksi!)
-            throw new ResponseErrorApiH2h(response);  
-        }
+        const transaction = await prismaClient.transaction.count({
+            where:{
+                status:"Menunggu",
+                id_moduls:checkModul?.id_moduls,
+            }
+        })
+        
         
     }
 
     static async checkProdukIsMulti(refID:string,memberid:string,product:string,dest:string){
+        console.log("apakah masuk ke multi")
         const produk = await prismaClient.product.findFirst({
             where:{
-                kode_produk:product
+                kode_produk:product,
+                is_multi:true
+               
             }
         })
-        if(produk!.is_multi === true){
+        if(produk){
           const startOfDayUTC = startOfDayUTCNow
           const endOfDayUTC   = endOfDayUTCNow
           const checkTransaksi = await prismaClient.transaction.findFirst({
@@ -182,7 +183,7 @@ export class ValidationH2hService{
             },
           })
           if(checkTransaksi){
-            const response = ResponseTransaksiGangguanFirst(refID,product,dest)
+            const response = ResponseTransaksiMulti(refID,product,dest)
             throw new ResponseErrorApiH2h(response)
           }
         }

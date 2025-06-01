@@ -36,7 +36,7 @@ export class CheckBalanceH2hTets{
                 password_ip:await bcrypt.hash("test", 10),
                 ip:"::ffff:127.0.0.1",
                 allow_sign:false,
-                kode_grups:"test"
+                kode_grups:"test",
             }
         })
     }

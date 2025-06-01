@@ -5,16 +5,18 @@ import { ValidationH2hService } from "../validation-h2h/validation-h2h-service";
 import { SendTransaksiH2hService } from "./send-transaksi-h2h-service";
 import { RequestTransksaksiH2h, ResponseTransaksiMenunggu } from "./transaksi-h2h-model";
 import { TransaksiH2hValidation } from "./transaksi-h2h-validation";
+import {  Response } from "express";
+import { ResponseErrorApiH2h } from "../../error/response-error-api-h2h";
 
 
 export class TransaksiHh2Service {
-    static async transaksi(request:RequestTransksaksiH2h){
+    static async transaksi(request:RequestTransksaksiH2h,res:Response){
         const checkRequest = Validation.validate(TransaksiH2hValidation.TRANSAKSI,request)
 
         await ValidationH2hService.validationH2h(checkRequest.memberID,checkRequest.password,checkRequest.pin,checkRequest.ip)
 
         //chek transaksi
-        await ValidationH2hService.checkTransaction(checkRequest.refID,checkRequest.product,checkRequest.dest)
+        await ValidationH2hService.checkTransaction(checkRequest.memberID,checkRequest.refID,checkRequest.product,checkRequest.dest)
         //check apakah produk  ada
         await ValidationH2hService.checkProduct(checkRequest.refID,checkRequest.memberID,checkRequest.product,checkRequest.dest)
         //check apakah saldo cukup
@@ -53,7 +55,7 @@ export class TransaksiHh2Service {
                 }
             })
 
-            const transaksi = await tx.transaction.create({
+            let transaksi = await tx.transaction.create({
                 data:{
                     reffid:checkRequest.refID,
                     nomer_tujuan:checkRequest.dest,
@@ -68,19 +70,32 @@ export class TransaksiHh2Service {
             })
             
             //check apakah ada modul
-            await ValidationH2hService.checkModul(transaksi.kode_produks,transaksi.trxid,transaksi.nomer_tujuan)
+            const checkModul = await ValidationH2hService.checkModul(transaksi.kode_produks,transaksi.trxid,transaksi.nomer_tujuan)
+
+            if(checkModul === false){
+               transaksi = await tx.transaction.update({
+                    where:{
+                        trxid:transaksi.trxid,
+                    },
+                    data:{
+                        status:"DiProses"
+                    }
+                })
+
+               const response = ResponseTransaksiMenunggu(transaksi)
+               throw new ResponseErrorApiH2h(response)
+            }
 
             return transaksi
         })
 
-        // await this.responseTransaksi(prosessTransaksi)
+        const response = ResponseTransaksiMenunggu(prosessTransaksi)
+        res.send(response)
 
         await SendTransaksiH2hService.send(prosessTransaksi.id_moduls,prosessTransaksi.trxid,prosessTransaksi.nomer_tujuan,prosessTransaksi.kode_produks)
         
         
     }
 
-    // static async responseTransaksi(transaction:Transaction):Promise<string>{
-    //     return ResponseTransaksiMenunggu(transaction)
-    // }
+   
 }

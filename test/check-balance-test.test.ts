@@ -67,7 +67,7 @@ describe("/balance",()=>{
         })
         expect(response.text).toBe("pin atau password salah");
     })
-    it("should check balance h2h password wrong",async()=>{  
+    it("should check balance h2h success",async()=>{  
         const response = await supertest(web)
         .get(`/balance`)
         .query({
